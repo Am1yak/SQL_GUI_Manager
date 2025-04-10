@@ -14,7 +14,6 @@ public class ConectionsManager {
     String databaseName = "new_schema";
 
     public Connection getConnection() throws SQLException {
-
         Connection conn = null;
         Properties connectionProps = new Properties();
         connectionProps.put("user", this.userName);

@@ -82,6 +82,8 @@ public class ConnectionFrame extends JFrame {
 
                 try{
                     con = conectionsManager.getConnection();
+                    TableFrame frame = new TableFrame(con);
+                    frame.init();
                 } catch (Exception ex){
                     JOptionPane.showMessageDialog(null, ex.getMessage());
                 }
@@ -97,6 +99,7 @@ public class ConnectionFrame extends JFrame {
         this.add(panel);
         this.setTitle("Connection Manager");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setSize(200, 500);
         this.setVisible(true);
     }
 }
