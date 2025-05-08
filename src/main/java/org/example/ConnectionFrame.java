@@ -87,8 +87,6 @@ public class ConnectionFrame extends JFrame {
                 } catch (Exception ex){
                     JOptionPane.showMessageDialog(null, ex.getMessage());
                 }
-
-                conectionTest();
             }
         });
         panel.add(connect_button);
