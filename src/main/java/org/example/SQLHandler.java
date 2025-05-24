@@ -1,19 +1,22 @@
 package org.example;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.sql.*;
 import java.util.ArrayList;
 
 public class SQLHandler {
     Connection con;
+    String tableName;
 
-    public SQLHandler(Connection con) {
+    public SQLHandler(Connection con, String tableName) {
         this.con = con;
+        this.tableName = tableName;
     }
 
-    public TableInfo form_table(String table_name) throws SQLException {
+    public TableInfo form_table() throws SQLException {
         Statement stmt = con.createStatement();
-        ResultSet rs = stmt.executeQuery("select * from " + table_name);
+        ResultSet rs = stmt.executeQuery("select * from " + this.tableName);
         ResultSetMetaData rsmd = rs.getMetaData();
         int cols = rsmd.getColumnCount();
 
@@ -22,7 +25,7 @@ public class SQLHandler {
             String col_name = rsmd.getColumnName(i);
             col_names[i-1] = col_name;
         }
-        TableInfo tableInfo = new TableInfo(table_name, col_names);
+        TableInfo tableInfo = new TableInfo(tableName, col_names);
 
         return tableInfo;
     }
@@ -46,7 +49,37 @@ public class SQLHandler {
             e.printStackTrace();
         }
         String[][] contents = rows.toArray(new String[rows.size()][]);
-        JTable gui_table = new JTable(contents, table.columns());
+        DefaultTableModel tableModel = new DefaultTableModel(contents, table.columns());
+        JTable gui_table = new JTable(tableModel);
         return gui_table;
+    }
+
+    public void add_colomn(String colomn_name){
+        String querry = "ALTER TABLE " + this.tableName + " ADD COLUMN " + colomn_name + " varchar(255)";
+        try (Statement st = con.createStatement()){
+            st.execute(querry);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void remove_colomn(String colomn_name){
+        String querry = "ALTER TABLE " + this.tableName + " DROP COLUMN " + colomn_name;
+        try (Statement st = con.createStatement()){
+            st.execute(querry);
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void remove_row(String col, String row_start){
+        String whr = col + "=" + "\'" + row_start + "\'";
+        String querry = "DELETE FROM " + this.tableName + " WHERE " + whr;
+        try (Statement st = con.createStatement()){
+            st.execute(querry);
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+
     }
 }
