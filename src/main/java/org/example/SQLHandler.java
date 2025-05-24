@@ -80,6 +80,22 @@ public class SQLHandler {
         } catch (SQLException e){
             e.printStackTrace();
         }
+    }
 
+    public void save_table(String[][] table_data, String[] coloms){
+        String query = "SELECT * FROM " + this.tableName;
+        try(Statement st = con.createStatement()){
+            ResultSet rs = st.executeQuery(query);
+
+            for (int i = 0; i < table_data.length; i++) {
+                for (int j = 0; j < table_data[i].length; j++) {
+                    if (coloms[j].equals(table_data[i][j])){
+
+                    }
+                }
+            }
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
     }
 }

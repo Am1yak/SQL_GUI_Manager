@@ -103,6 +103,10 @@ public class TableFrame extends JFrame {
         panel.add(bot_panel);
     }
 
+    public void save_func(){
+
+    }
+
     public void init(){
         ui_init();
         this.add(panel);
