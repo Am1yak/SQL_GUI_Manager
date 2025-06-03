@@ -1,13 +1,12 @@
 package org.example;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -16,6 +15,7 @@ public class TableFrame extends JFrame {
     Connection con;
     String tableName;
     DefaultTableModel model;
+    JTable gui_table;
 
     public TableFrame(Connection con) {
         this.con = con;
@@ -26,6 +26,7 @@ public class TableFrame extends JFrame {
         JToolBar toolBar = new JToolBar();
         JButton switch_database_button = new JButton("Switch Database");
         TableFrame mainFrame = this;
+
         switch_database_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 TableFrame frame = new TableFrame(con);
@@ -35,7 +36,15 @@ public class TableFrame extends JFrame {
         });
         toolBar.add(switch_database_button);
 
+        JButton update_database_button = new JButton("Update Database");
+        update_database_button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                update_database();
+            }
+        });
+        toolBar.add(update_database_button);
         panel.add(toolBar);
+
         TableInfo table = null;
         SQLHandler handler = new SQLHandler(con, tableName);
         try {
@@ -44,7 +53,7 @@ public class TableFrame extends JFrame {
             e.printStackTrace();
         }
 
-        JTable gui_table = handler.getTable(table);
+        gui_table = handler.getTable(table);
         model = (DefaultTableModel) gui_table.getModel();
         JScrollPane pane = new JScrollPane(gui_table);
         panel.add(pane);
@@ -52,28 +61,45 @@ public class TableFrame extends JFrame {
         JPanel bot_panel = new JPanel();
         bot_panel.setLayout(new BoxLayout(bot_panel, BoxLayout.X_AXIS));
 
-        JButton save_button = new JButton("Save");
-        save_button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-
+        model.addTableModelListener(new TableModelListener() {
+            public void tableChanged(TableModelEvent e) {
+                if(e.getType() == TableModelEvent.UPDATE && !(e.getColumn() == -1)){
+                    int row = e.getFirstRow();
+                    int col = e.getColumn();
+                    String str_row = model.getValueAt(row, col).toString();
+                    String str_col = model.getColumnName(col).toString();
+                    String ck_colomn = model.getColumnName(0).toString();
+                    String ck_row = model.getValueAt(row, 0).toString();
+                    try {
+                        handler.save_value(str_col, str_row, ck_colomn, ck_row);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
             }
         });
-        bot_panel.add(save_button);
 
         JButton add_row_button = new JButton("Add Row");
         add_row_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                int id = return_id();
                 model.addRow(new Object[]{});
+                model.setValueAt(id, model.getRowCount()-1, 0);
+                handler.insert_row(id, model.getColumnName(0));
+                update_database();
             }
         });
         bot_panel.add(add_row_button);
+
 
         JButton add_column_button = new JButton("Add Column");
         add_column_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 String col_name = JOptionPane.showInputDialog(null, "Enter the column name:", "Column Name", JOptionPane.PLAIN_MESSAGE);
+                String[] classes = {"String", "Integer", "Float"};
+                int int_class = JOptionPane.showOptionDialog(null, "Choose colomn class", "Column class", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, classes, classes[0]);
                 model.addColumn(col_name);
-                handler.add_colomn(col_name);
+                handler.add_colomn(col_name, int_class);
             }
         });
         bot_panel.add(add_column_button);
@@ -103,8 +129,32 @@ public class TableFrame extends JFrame {
         panel.add(bot_panel);
     }
 
-    public void save_func(){
+    public int return_id(){
+        int rows = model.getRowCount();
+        ArrayList<Integer> ids = new ArrayList<Integer>();
+        for (int i = 0; i < rows; i++) {
+            ids.add(Integer.parseInt((String) model.getValueAt(i, 0)));
+        }
 
+        ids.sort(null);
+        int len = ids.size();
+        int i = 0;
+        while ((i<len) && ((i+1) == ids.get(i))){
+            i++;
+        }
+        return i+1;
+    }
+
+    public void update_database(){
+        TableInfo table = null;
+        SQLHandler handler = new SQLHandler(con, tableName);
+        try {
+            table = handler.form_table();
+        } catch (SQLException ex){
+            ex.printStackTrace();
+        }
+        JTable update_table = handler.getTable(table);
+        gui_table.setModel(update_table.getModel());
     }
 
     public void init(){

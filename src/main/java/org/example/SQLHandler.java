@@ -8,10 +8,14 @@ import java.util.ArrayList;
 public class SQLHandler {
     Connection con;
     String tableName;
+    String insert_st = null;
+    PreparedStatement pst;
+    String[] no_default_col_names;
 
     public SQLHandler(Connection con, String tableName) {
         this.con = con;
         this.tableName = tableName;
+        no_default_colomns_return();
     }
 
     public TableInfo form_table() throws SQLException {
@@ -32,7 +36,7 @@ public class SQLHandler {
 
     public JTable getTable(TableInfo table){
         ArrayList<String[]> rows = null;
-        String query = "select * from Persons";
+        String query = "select * from " + this.tableName;
         try (Statement st = con.createStatement()){
             ResultSet rs = st.executeQuery(query);
 
@@ -54,13 +58,26 @@ public class SQLHandler {
         return gui_table;
     }
 
-    public void add_colomn(String colomn_name){
-        String querry = "ALTER TABLE " + this.tableName + " ADD COLUMN " + colomn_name + " varchar(255)";
+    public void add_colomn(String colomn_name, int col_class){
+        String col = null;
+        switch (col_class){
+            case 0:
+                col = " varchar(255) set default \'\'";
+                break;
+            case 1:
+                col = " int set default \'\'";
+                break;
+            case 2:
+                col = " float set default \'\'";
+                break;
+        }
+        String querry = "ALTER TABLE " + this.tableName + " ADD COLUMN " + colomn_name + col;
         try (Statement st = con.createStatement()){
             st.execute(querry);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        no_default_colomns_return();
     }
 
     public void remove_colomn(String colomn_name){
@@ -70,6 +87,7 @@ public class SQLHandler {
         } catch (SQLException e){
             e.printStackTrace();
         }
+        no_default_colomns_return();
     }
 
     public void remove_row(String col, String row_start){
@@ -82,18 +100,56 @@ public class SQLHandler {
         }
     }
 
-    public void save_table(String[][] table_data, String[] coloms){
-        String query = "SELECT * FROM " + this.tableName;
-        try(Statement st = con.createStatement()){
-            ResultSet rs = st.executeQuery(query);
+    public void save_value(String colomn, String row, String check_colomn, String check_row) throws SQLException {
+        String prep_st = "UPDATE " + tableName + " SET " + colomn + "=? WHERE " + check_colomn + "=?";
+        PreparedStatement prst = con.prepareStatement(prep_st);
+        prst.setString(1, row);
+        prst.setString(2, check_row);
+        prst.executeUpdate();
+    }
 
-            for (int i = 0; i < table_data.length; i++) {
-                for (int j = 0; j < table_data[i].length; j++) {
-                    if (coloms[j].equals(table_data[i][j])){
-
-                    }
+    public void insert_row(int id, String id_colomn){
+        try {
+            if(insert_st == null){
+                this.insert_st = "insert into " + tableName +"(" + id_colomn;
+                String str_values = ") value(?";
+                for (String col : no_default_col_names){
+                    this.insert_st += ", " + col;
+                    str_values += ",? ";
+                }
+                this.insert_st += str_values + ")";
+                try{
+                    pst = con.prepareStatement(insert_st);
+                } catch (SQLException e){
+                    e.printStackTrace();
                 }
             }
+            pst.setString(1, String.valueOf(id));
+            for (int i = 0; i < no_default_col_names.length; i++){
+                String col_data = JOptionPane.showInputDialog(null, ("Colomn "+ no_default_col_names[i] + " must be filled. Please enter colomns value."));
+                pst.setString(i+2, col_data);
+            }
+            pst.executeUpdate();
+        } catch (SQLException e){
+            e.printStackTrace();
+        }
+    }
+
+    public void no_default_colomns_return(){
+        String query = "SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT " +
+        "FROM INFORMATION_SCHEMA.COLUMNS " +
+        "WHERE TABLE_NAME = \'" + tableName + "\' " +
+        "AND IS_NULLABLE = 'NO' " +
+        "AND COLUMN_DEFAULT IS NULL";
+
+        try(Statement statement = con.createStatement()){
+            ResultSet rs = statement.executeQuery(query);
+
+            ArrayList<String> no_def_col_names = new ArrayList<>();
+            while (rs.next()) {
+                no_def_col_names.add(rs.getString(1));
+            }
+            no_default_col_names = no_def_col_names.toArray(new String[no_def_col_names.size()]);
         } catch (SQLException e){
             e.printStackTrace();
         }
