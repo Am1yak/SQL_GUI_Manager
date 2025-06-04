@@ -10,23 +10,38 @@ import java.awt.event.ActionListener;
 import java.sql.*;
 import java.util.ArrayList;
 
+/**
+ * A Swing frame that allows a user to view and interact with a database table.
+ * The table is editable, and changes can be pushed back to the database.
+ * Functionality includes adding/removing rows and columns, and switching tables.
+ */
 public class TableFrame extends JFrame {
-    JPanel panel = new JPanel();
-    Connection con;
-    String tableName;
-    DefaultTableModel model;
-    JTable gui_table;
+    private JPanel panel = new JPanel();
+    private Connection con;
+    private String tableName;
+    private DefaultTableModel model;
+    private JTable gui_table;
 
+    /**
+     * Constructs a TableFrame instance with an existing database connection.
+     * Prompts the user to input the name of the database table to interact with.
+     *
+     * @param con a valid SQL database connection
+     */
     public TableFrame(Connection con) {
         this.con = con;
         this.tableName = JOptionPane.showInputDialog(null, "Enter the table name:", "Table Name", JOptionPane.PLAIN_MESSAGE);
     }
 
-    public void ui_init(){
+    /**
+     * Initializes all UI components: toolbar, table, buttons, and listeners.
+     */
+    private void ui_init(){
         JToolBar toolBar = new JToolBar();
         JButton switch_database_button = new JButton("Switch Database");
         TableFrame mainFrame = this;
 
+        // Switch database (recreate the frame with the same connection)
         switch_database_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 TableFrame frame = new TableFrame(con);
@@ -36,6 +51,7 @@ public class TableFrame extends JFrame {
         });
         toolBar.add(switch_database_button);
 
+        // Update database from GUI table
         JButton update_database_button = new JButton("Update Database");
         update_database_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -45,6 +61,7 @@ public class TableFrame extends JFrame {
         toolBar.add(update_database_button);
         panel.add(toolBar);
 
+        // Form table from database
         TableInfo table = null;
         SQLHandler handler = new SQLHandler(con, tableName);
         try {
@@ -61,6 +78,7 @@ public class TableFrame extends JFrame {
         JPanel bot_panel = new JPanel();
         bot_panel.setLayout(new BoxLayout(bot_panel, BoxLayout.X_AXIS));
 
+        // Track changes and update database on cell edit
         model.addTableModelListener(new TableModelListener() {
             public void tableChanged(TableModelEvent e) {
                 if(e.getType() == TableModelEvent.UPDATE && !(e.getColumn() == -1)){
@@ -79,6 +97,7 @@ public class TableFrame extends JFrame {
             }
         });
 
+        // Add row button
         JButton add_row_button = new JButton("Add Row");
         add_row_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -91,7 +110,7 @@ public class TableFrame extends JFrame {
         });
         bot_panel.add(add_row_button);
 
-
+        // Add column button
         JButton add_column_button = new JButton("Add Column");
         add_column_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -104,6 +123,7 @@ public class TableFrame extends JFrame {
         });
         bot_panel.add(add_column_button);
 
+        // Remove row button
         JButton remove_row_button = new JButton("Remove Row");
         remove_row_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -115,6 +135,7 @@ public class TableFrame extends JFrame {
         });
         bot_panel.add(remove_row_button);
 
+        // Remove column button
         JButton remove_column_button = new JButton("Remove Column");
         remove_column_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -129,7 +150,13 @@ public class TableFrame extends JFrame {
         panel.add(bot_panel);
     }
 
-    public int return_id(){
+    /**
+     * Returns a new unique ID for insertion by checking existing ID values.
+     * Assumes IDs are integers starting from 1 and gapless.
+     *
+     * @return a new unique ID
+     */
+    private int return_id(){
         int rows = model.getRowCount();
         ArrayList<Integer> ids = new ArrayList<Integer>();
         for (int i = 0; i < rows; i++) {
@@ -145,7 +172,10 @@ public class TableFrame extends JFrame {
         return i+1;
     }
 
-    public void update_database(){
+    /**
+     * Re-reads the table from the database and updates the GUI table.
+     */
+    private void update_database(){
         TableInfo table = null;
         SQLHandler handler = new SQLHandler(con, tableName);
         try {
@@ -157,6 +187,9 @@ public class TableFrame extends JFrame {
         gui_table.setModel(update_table.getModel());
     }
 
+    /**
+     * Initializes the frame and shows it.
+     */
     public void init(){
         ui_init();
         this.add(panel);

@@ -5,13 +5,17 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class ConectionsManager {
-    String dbms = "mysql";
-    String userName = "root";
-    String password = "9692";
-    String serverName = "localhost";
-    int portNumber = 3306;
-    String databaseName = "new_schema";
+/**
+ * A utility class for managing connection to database.
+ * Provides method to establish connection and returns it for further work
+ */
+public class ConnectionsManager {
+    public String dbms;
+    public String userName;
+    public String password;
+    public String serverName;
+    public int portNumber;
+    public String databaseName;
 
     public Connection getConnection() throws SQLException {
         Connection conn = null;

@@ -9,33 +9,28 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * A Swing-based GUI frame that allows the user to input database connection parameters,
+ * attempt a connection, and initialize the main table interface on success.
+ */
 public class ConnectionFrame extends JFrame {
-    JPanel panel = new JPanel();
-    ConectionsManager conectionsManager = new ConectionsManager();
-    Connection con;
+    /** Panel that contains the UI components */
+    private JPanel panel = new JPanel();
+    private ConnectionsManager connectionsManager = new ConnectionsManager();
+    private Connection con;
 
+    /** Default database connection */
     String userName = "root";
     String password = "9692";
     String serverName = "localhost";
     int portNumber = 3306;
     String databaseName = "new_schema";
 
-    public void conectionTest(){
-        String sql = "select Person, age, IQ from Persons";
-        try(Statement stmt = con.createStatement()) {
-            ResultSet rs = stmt.executeQuery(sql);
-            while(rs.next()) {
-                String name = rs.getString("Person");
-                int age = rs.getInt("age");
-                int iq = rs.getInt("IQ");
-                System.out.println("Name: " + name + ", Age: " + age + ", IQ: " + iq);
-            }
-        } catch (SQLException ex){
-            JOptionPane.showMessageDialog(null, ex.getMessage());
-        }
-    }
-
-    public void ui_init(){
+    /**
+     * Initializes the UI components for inputting connection parameters and
+     * adds the "Connect" button to establish a database connection.
+     */
+    private void ui_init(){
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
         JLabel info_label = new JLabel("Connect to DB");
@@ -71,17 +66,24 @@ public class ConnectionFrame extends JFrame {
         panel.add(database_text);
         database_text.setText(databaseName);
 
+        /**
+         * Handles the click event for the "Connect" button.
+         * Gathers user input, sets it into the ConectionsManager, attempts connection,
+         * and opens a new TableFrame on success.
+         *
+         * @param e the event object
+         */
         JButton connect_button = new JButton("Connect");
         connect_button.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                conectionsManager.databaseName = database_text.getText();
-                conectionsManager.userName = user_text.getText();
-                conectionsManager.password = password_text.getText();
-                conectionsManager.serverName = server_text.getText();
-                conectionsManager.portNumber = portNumber = Integer.parseInt(port_text.getText());
+                connectionsManager.databaseName = database_text.getText();
+                connectionsManager.userName = user_text.getText();
+                connectionsManager.password = password_text.getText();
+                connectionsManager.serverName = server_text.getText();
+                connectionsManager.portNumber = portNumber = Integer.parseInt(port_text.getText());
 
                 try{
-                    con = conectionsManager.getConnection();
+                    con = connectionsManager.getConnection();
                     TableFrame frame = new TableFrame(con);
                     frame.init();
                 } catch (Exception ex){
@@ -92,6 +94,9 @@ public class ConnectionFrame extends JFrame {
         panel.add(connect_button);
     }
 
+    /**
+     * Initializes the full JFrame UI and displays the window.
+     */
     public void init(){
         ui_init();
         this.add(panel);
