@@ -91,7 +91,7 @@ public class TableFrame extends JFrame {
                     try {
                         handler.save_value(str_col, str_row, ck_colomn, ck_row);
                     } catch (SQLException ex) {
-                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(mainFrame, "Invalid datatype! Enter correct value", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }

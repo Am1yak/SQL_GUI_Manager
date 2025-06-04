@@ -10,7 +10,7 @@ import java.util.Properties;
  * Provides method to establish connection and returns it for further work
  */
 public class ConnectionsManager {
-    public String dbms;
+    public String dbms="mysql";
     public String userName;
     public String password;
     public String serverName;
